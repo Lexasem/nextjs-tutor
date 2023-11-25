@@ -1,6 +1,6 @@
 'use server';
 
-import { z } from 'zod';
+import {z} from 'zod';
 import {sql} from "@vercel/postgres";
 import {revalidatePath} from "next/cache";
 import {redirect} from "next/navigation";
@@ -30,4 +30,21 @@ export async function createInvoice(formData: FormData) {
   `;
     revalidatePath('/dashboard/invoices');
     redirect('/dashboard/invoices');
+}
+
+export async function updateInvoice(id: string, formData: FormData) {
+    const {customerId, amount, status} = CreateInvoice.parse({
+        customerId: formData.get('customerId'),
+        amount: formData.get('amount'),
+        status: formData.get('status'),
+    });
+    const amountInCents = amount * 100;
+    await sql`
+        update invoices set customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+        where id = ${id}
+    `;
+    revalidatePath('/dashboard/invoices');
+    revalidatePath(`/dashboard/invoices/${id}/edit`);
+    redirect('/dashboard/invoices');
+
 }
